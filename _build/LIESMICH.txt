@@ -1,0 +1,9 @@
+Generator für die semesterwerk-Seiten (nicht auf den Webserver hochladen).
+
+pages/*.html  Inhalt der einzelnen Seiten (ohne Kopf- und Fußbereich)
+build.py      setzt Kopf, Navigation, Fußbereich und Bausteine ein
+
+Seiten neu erzeugen (im Ordner _build ausführen):
+  python3 build.py ..
+
+Kopfbereich, Navigation und Fußzeile werden nur in build.py geändert.

@@ -1,0 +1,26 @@
+SEMESTERWERK – Logo-Paket
+
+FARBEN
+Tinte (Schrift, dunkler Hintergrund)  #111827   RGB 17 24 39
+Koralle (Akzent-Punkt)                 #F2784B   RGB 242 120 75
+Grau (Claim auf Weiß)                  #4B5563   RGB 75 85 99
+Hellgrau (Claim auf Dunkel)            #C9CED8   RGB 201 206 216
+Papier (heller Hintergrund)            #F1F2F6   RGB 241 242 246
+
+SCHRIFT
+Sora (Google Fonts, kostenlos, auch kommerziell nutzbar – SIL Open Font License)
+"semester" = Light (300), "werk" = Bold (700), Claim = Medium (500)
+In den SVG-Dateien ist die Schrift bereits in Pfade umgewandelt –
+das Logo sieht also überall gleich aus, auch ohne installierte Schrift.
+
+WELCHE DATEI WOFÜR?
+svg/   Vektordateien – für Druckerei, Designer, Website (beliebig skalierbar)
+png/   Bilddateien mit transparentem Hintergrund
+       semesterwerk-logo.png               Hauptlogo auf hellem Grund
+       semesterwerk-logo-weiss.png         für dunkle Hintergründe
+       ...-claim                           mit Unterzeile „Personalvermittlung für Praktika & Werkstudenten"
+       ...-klein                           600 px breit, z. B. für E-Mail-Signatur
+       semesterwerk-icon-1024/512.png      Social-Media-Profilbild (LinkedIn, Instagram)
+       semesterwerk-icon-eckig-1024.png    falls die Plattform selbst rund/abgerundet zuschneidet
+       semesterwerk-icon-192/180.png       Website-Icon (Android / Apple Touch Icon)
+favicon.ico   Browser-Tab-Symbol für die Website

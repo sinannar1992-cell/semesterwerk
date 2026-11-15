@@ -1,0 +1,84 @@
+
+    <!-- ============ HERO ============ -->
+    <section class="hero page-hero" aria-labelledby="hero-title">
+      <div class="container">
+        <div class="hero-content">
+          <p class="label">Kontakt</p>
+          <h1 id="hero-title"><em>Sprechen wir über</em> Ihre <span class="mark">offene Stelle.</span></h1>
+          <p class="lead">Sie möchten eine Praktikums- oder Werkstudentenstelle besetzen oder haben eine Frage? Rufen Sie an oder schreiben Sie uns – Sie erreichen direkt den Inhaber.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-alt" id="nachricht" data-sticky-hide aria-labelledby="form-title">
+      <div class="container form-layout">
+        <div class="form-aside">
+          <div class="contact-box">
+            <div class="icon-box" style="margin:0;">{{i:phone}}</div>
+            <div>
+              <p>Telefon · Mo–Fr, 9–18 Uhr</p>
+              <p><a href="tel:+493042099429">030 420 994 29</a></p>
+            </div>
+          </div>
+          <div class="contact-box">
+            <div class="icon-box" style="margin:0;">{{i:mail}}</div>
+            <div>
+              <p>E-Mail · Antwort in der Regel innerhalb eines Werktags</p>
+              <p><a href="mailto:info@semesterwerk.de">info@semesterwerk.de</a></p>
+            </div>
+          </div>
+          <div class="contact-box">
+            <div class="icon-box" style="margin:0;">{{i:pin}}</div>
+            <div>
+              <p>Anschrift</p>
+              <p style="color: var(--tinte);">semesterwerk · Inhaber Sinan Nar<br>Eisenhutweg 64A, 12487 Berlin</p>
+            </div>
+          </div>
+          <div class="notice">
+            {{i:briefcase}}
+            <p><strong>Konkrete Stelle zu besetzen?</strong> Mit dem <a href="fuer-unternehmen.html#anfrage" class="text-link">Anfrageformular</a> erhalten Sie am schnellsten passende Profile.</p>
+          </div>
+        </div>
+
+        <div class="form-card">
+          <div class="form-card-head">
+            <h2 id="form-title" style="font-size: 1.4rem;">Nachricht senden</h2>
+            <p>Für Fragen, Terminwünsche oder Feedback.</p>
+          </div>
+          <form data-form="kontakt" data-endpoint="" data-subject="Kontaktanfrage über semesterwerk.de" action="#" method="post">
+            <input type="text" name="website_hp" class="form-honeypot" tabindex="-1" autocomplete="off" aria-hidden="true">
+            <div class="form-grid cols-2">
+              <fieldset class="form-group full">
+                <legend>Ich schreibe als … *</legend>
+                <div class="choice-grid">
+                  <label class="choice"><input type="radio" name="absender" value="unternehmen" data-text="Unternehmen" required><span>Unternehmen</span></label>
+                  <label class="choice"><input type="radio" name="absender" value="studierende" data-text="Student:in"><span>Student:in</span></label>
+                  <label class="choice"><input type="radio" name="absender" value="sonstiges" data-text="Sonstiges"><span>Sonstiges</span></label>
+                </div>
+              </fieldset>
+              <div class="form-group">
+                <label for="cName" class="form-label">Name *</label>
+                <input type="text" id="cName" name="name" class="form-control" autocomplete="name" required>
+              </div>
+              <div class="form-group">
+                <label for="cEmail" class="form-label">E-Mail *</label>
+                <input type="email" id="cEmail" name="email" class="form-control" autocomplete="email" inputmode="email" required>
+              </div>
+              <div class="form-group full">
+                <label for="cPhone" class="form-label">Telefon <span class="opt">(optional, für einen Rückruf)</span></label>
+                <input type="tel" id="cPhone" name="telefon" class="form-control" autocomplete="tel" inputmode="tel">
+              </div>
+              <div class="form-group full">
+                <label for="cMessage" class="form-label">Ihre Nachricht *</label>
+                <textarea id="cMessage" name="nachricht" class="form-control" required></textarea>
+              </div>
+              <div class="form-group full form-submit">
+                <button type="submit" class="btn btn-primary btn-lg btn-block">Nachricht senden</button>
+                <p class="form-legal">Wir verwenden Ihre Angaben nur zur Bearbeitung Ihrer Nachricht (Art. 6 Abs. 1 lit. b bzw. f DSGVO). Mehr dazu in der <a href="datenschutz.html">Datenschutzerklärung</a>.</p>
+              </div>
+            </div>
+            <div class="form-status" aria-live="polite"></div>
+          </form>
+        </div>
+      </div>
+    </section>

@@ -1,0 +1,12 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Lokale Sicherungskopien (gehören nicht ins Repository)
+_backup-*.zip
+
+# Editor- und Werkzeugordner
+.claude/
+.vscode/
+.idea/
