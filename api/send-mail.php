@@ -229,19 +229,20 @@ if ($formType === 'unternehmen') {
         sendResponse(false, 'Bitte bestätige die Einwilligung zur Datenverarbeitung.', 400);
     }
 
-    // Lebenslauf-Upload prüfen (PDF, max. 10 MB)
-    if (isset($_FILES['lebenslauf']) && $_FILES['lebenslauf']['error'] !== UPLOAD_ERR_NO_FILE) {
-        $fileError = $_FILES['lebenslauf']['error'];
+    // Lebenslauf-Upload prüfen (PDF, max. 10 MB) - unterstützt 'attachment' und 'lebenslauf'
+    $cvUpload = $_FILES['attachment'] ?? $_FILES['lebenslauf'] ?? null;
+    if ($cvUpload && $cvUpload['error'] !== UPLOAD_ERR_NO_FILE) {
+        $fileError = $cvUpload['error'];
         if ($fileError !== UPLOAD_ERR_OK) {
             sendResponse(false, 'Fehler beim Upload des Lebenslaufs (Fehlercode: ' . $fileError . '). Bitte erneut versuchen.', 400);
         }
 
         // Max. 10 MB = 10 * 1024 * 1024 Bytes
-        if ($_FILES['lebenslauf']['size'] > 10485760) {
+        if ($cvUpload['size'] > 10485760) {
             sendResponse(false, 'Der Lebenslauf ist größer als 10 MB. Bitte eine kleinere PDF-Datei wählen.', 400);
         }
 
-        $origName = $_FILES['lebenslauf']['name'];
+        $origName = $cvUpload['name'];
         $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
         if ($ext !== 'pdf') {
             sendResponse(false, 'Bitte lade deinen Lebenslauf ausschließlich im PDF-Format hoch.', 400);
@@ -250,14 +251,14 @@ if ($formType === 'unternehmen') {
         // MIME-Typ prüfen
         if (function_exists('finfo_open')) {
             $finfo = finfo_open(FILEINFO_MIME_TYPE);
-            $mime = finfo_file($finfo, $_FILES['lebenslauf']['tmp_name']);
+            $mime = finfo_file($finfo, $cvUpload['tmp_name']);
             finfo_close($finfo);
             if ($mime !== 'application/pdf' && $mime !== 'application/x-pdf') {
                 sendResponse(false, 'Die hochgeladene Datei ist keine gültige PDF-Datei.', 400);
             }
         }
 
-        $attachmentData = file_get_contents($_FILES['lebenslauf']['tmp_name']);
+        $attachmentData = file_get_contents($cvUpload['tmp_name']);
         if ($attachmentData === false) {
             sendResponse(false, 'Die Datei konnte nicht gelesen werden. Bitte erneut versuchen.', 500);
         }

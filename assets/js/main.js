@@ -256,6 +256,13 @@
     const endpoint = (form.dataset.endpoint || form.action || 'https://formsubmit.co/ajax/info@semesterwerk.de').trim();
     const isStudent = form.dataset.form === 'studierende';
 
+    // FormSubmit erwartet für Datei-Anhänge zwingend den Feldnamen 'attachment'
+    form.querySelectorAll('input[type="file"]').forEach(f => {
+      if (!f.name || f.name === 'lebenslauf') {
+        f.name = 'attachment';
+      }
+    });
+
     if (btn) {
       btn.disabled = true;
       btn.dataset.label = btn.innerHTML;
