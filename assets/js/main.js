@@ -253,7 +253,7 @@
     }
     form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
 
-    const endpoint = (form.dataset.endpoint || form.action || 'api/send-mail.php').trim();
+    const endpoint = (form.dataset.endpoint || form.action || 'https://formsubmit.co/ajax/info@semesterwerk.de').trim();
     const isStudent = form.dataset.form === 'studierende';
 
     if (btn) {
@@ -275,18 +275,29 @@
 
       const data = await res.json().catch(() => null);
 
-      if (!res.ok || (data && !data.ok)) {
-        const errorMsg = data && data.message ? data.message : null;
-        throw new Error(errorMsg || String(res.status));
+      // Erfolgsprüfung für FormSubmit (data.success === 'true') und PHP (data.ok === true)
+      const isSuccess = (data && (data.success === 'true' || data.success === true || data.ok === true))
+        || (res.ok && (!data || data.success !== 'false'));
+
+      if (isSuccess) {
+        form.reset();
+        showStatus(status, 'is-success', isStudent
+          ? '<strong>Vielen Dank! Deine Angaben und dein Lebenslauf wurden erfolgreich übermittelt.</strong><br>Wir prüfen dein Profil und melden uns in der Regel innerhalb weniger Werktage persönlich bei dir.'
+          : '<strong>Vielen Dank – Ihre Anfrage ist eingegangen.</strong><br>Wir melden uns in der Regel innerhalb eines Werktags persönlich bei Ihnen, um Ihren Bedarf kurz abzustimmen.');
+        return;
       }
 
-      form.reset();
-      showStatus(status, 'is-success', isStudent
-        ? '<strong>Vielen Dank! Deine Angaben und dein Lebenslauf wurden erfolgreich übermittelt.</strong><br>Wir prüfen dein Profil und melden uns in der Regel innerhalb weniger Werktage persönlich bei dir.'
-        : '<strong>Vielen Dank – Ihre Anfrage ist eingegangen.</strong><br>Wir melden uns in der Regel innerhalb eines Werktags persönlich bei Ihnen, um Ihren Bedarf kurz abzustimmen.');
+      // Einmalige FormSubmit-Aktivierung bei der allerersten Nutzung
+      if (data && data.message && data.message.toLowerCase().includes('activation')) {
+        showStatus(status, 'is-info', '<strong>Fast geschafft!</strong> Zur einmaligen Freischaltung des Formulars wurde eine E-Mail an <em>info@semesterwerk.de</em> gesendet. Bitte dort auf den Aktivierungslink („Activate Form“) klicken, danach werden alle Anfragen sofort zugestellt.');
+        return;
+      }
+
+      const errorMsg = data && data.message ? data.message : null;
+      throw new Error(errorMsg || String(res.status));
     } catch (err) {
       if (err.message === 'FILE_PROTOCOL') {
-        showStatus(status, 'is-info', '<strong>Lokale Vorschau (file://):</strong> Der automatische Versand und Datei-Upload läuft über das PHP-Backend auf dem Webserver (z. B. bei IONOS). Beim direkten Öffnen als lokale Datei kann PHP nicht ausgeführt werden. Auf dem Server wird die E-Mail mit Lebenslauf vollautomatisch an info@semesterwerk.de gesendet.');
+        showStatus(status, 'is-info', '<strong>Lokale Vorschau (file://):</strong> Der automatische Versand läuft über den Webserver. Sobald die Seite auf der Domain aufgerufen wird, werden alle Angaben und die PDF-Datei direkt im Hintergrund an info@semesterwerk.de gesendet.');
       } else {
         const userMsg = err.message && !err.message.match(/^[0-9]+$/) ? err.message : null;
         showStatus(status, 'is-error', userMsg || `Das hat leider nicht geklappt. Bitte schreiben Sie uns direkt an <a href="mailto:${EMAIL}">${EMAIL}</a> oder rufen Sie an: <a href="tel:+493042099429">030 420 994 29</a>.`);

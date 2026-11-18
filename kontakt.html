@@ -20,7 +20,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="assets/img/png/semesterwerk-icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/img/png/semesterwerk-icon-180.png">
   <link rel="stylesheet" href="assets/css/style.css?v=20261118">
-  <script src="assets/js/main.js?v=20261118-2" defer></script>
+  <script src="assets/js/main.js?v=20261118-3" defer></script>
 </head>
 <body>
 
@@ -118,8 +118,11 @@
             <h2 id="form-title" style="font-size: 1.4rem;">Nachricht senden</h2>
             <p>Für Fragen, Terminwünsche oder Feedback.</p>
           </div>
-          <form data-form="kontakt" data-endpoint="api/send-mail.php" data-subject="Kontaktanfrage über semesterwerk.de" action="api/send-mail.php" method="post">
-            <input type="hidden" name="form_type" value="kontakt">
+          <form data-form="kontakt" data-endpoint="https://formsubmit.co/ajax/info@semesterwerk.de" data-subject="Kontaktanfrage über semesterwerk.de" action="https://formsubmit.co/info@semesterwerk.de" method="post">
+            <input type="hidden" name="_subject" value="Kontaktanfrage über semesterwerk.de">
+            <input type="hidden" name="_template" value="table">
+            <input type="hidden" name="_captcha" value="false">
+            <input type="text" name="_honey" class="form-honeypot" tabindex="-1" autocomplete="off" aria-hidden="true" style="display:none">
             <input type="text" name="website_hp" class="form-honeypot" tabindex="-1" autocomplete="off" aria-hidden="true">
             <div class="form-grid cols-2">
               <fieldset class="form-group full">
