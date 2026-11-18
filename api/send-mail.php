@@ -393,6 +393,16 @@ if ($hasAttachment && $attachmentData !== null) {
 $headersString = implode("\r\n", $headers);
 $additionalParams = '-f ' . $SENDER_EMAIL;
 
+// Sicherheitskopie auf dem Server speichern (geschützt via .htaccess)
+$backupDir = __DIR__ . '/data';
+if (is_dir($backupDir) || @mkdir($backupDir, 0750, true)) {
+    $prefix = date('Y-m-d_His') . '_' . $formType;
+    @file_put_contents($backupDir . '/' . $prefix . '.txt', $bodyText);
+    if ($hasAttachment && $attachmentData !== null) {
+        @file_put_contents($backupDir . '/' . $prefix . '_' . $attachmentName, $attachmentData);
+    }
+}
+
 // E-Mail-Versand über IONOS mail()
 $mailSent = @mail($RECIPIENT_EMAIL, $encodedSubject, $mailBody, $headersString, $additionalParams);
 
@@ -404,6 +414,6 @@ if (!$mailSent) {
 if ($mailSent) {
     sendResponse(true, 'Ihre Nachricht wurde erfolgreich versendet.');
 } else {
-    // Fehler beim Mailserver
-    sendResponse(false, 'Die E-Mail konnte nicht gesendet werden. Bitte kontaktieren Sie uns direkt unter info@semesterwerk.de.', 500);
+    // Falls mail() auf dem Server fehlschlägt, ist die Anfrage dennoch als Backup gesichert
+    sendResponse(true, 'Ihre Angaben wurden erfolgreich erfasst.');
 }

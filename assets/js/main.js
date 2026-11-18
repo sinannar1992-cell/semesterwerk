@@ -111,15 +111,6 @@
     // 7. Formulare
     document.querySelectorAll('form[data-form]').forEach(form => {
       form.setAttribute('novalidate', '');
-      // Ohne Endpoint (E-Mail-Versand) kann keine Datei mitgeschickt werden
-      if (!(form.dataset.endpoint || '').trim()) {
-        form.querySelectorAll('input[type="file"]').forEach(f => {
-          f.required = false;
-          const hint = form.querySelector(`[data-file-hint="${f.id}"]`);
-          if (hint) hint.textContent = 'Bitte hänge deinen Lebenslauf (PDF) an die E-Mail an, die sich nach dem Absenden öffnet.';
-          f.closest('.form-group')?.setAttribute('hidden', '');
-        });
-      }
       form.addEventListener('submit', (e) => handleSubmit(e, form));
     });
 
@@ -238,10 +229,9 @@
 
   /**
    * Formularversand.
-   * - Ist data-endpoint gesetzt (z. B. eigenes PHP-Skript oder ein Formular-Dienst
-   *   mit AV-Vertrag), wird per fetch dorthin gesendet.
-   * - Ohne Endpoint öffnet sich das E-Mail-Programm mit vorausgefüllter Nachricht,
-   *   damit keine Anfrage verloren geht.
+   * Sendet die Formulardaten (inklusive etwaiger Datei-Uploads wie dem Lebenslauf)
+   * per fetch() direkt im Hintergrund an das PHP-Backend.
+   * Es wird zu keinem Zeitpunkt das E-Mail-Programm des Nutzers geöffnet.
    */
   async function handleSubmit(e, form) {
     e.preventDefault();
@@ -263,17 +253,8 @@
     }
     form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
 
-    const endpoint = (form.dataset.endpoint || '').trim();
+    const endpoint = (form.dataset.endpoint || form.action || 'api/send-mail.php').trim();
     const isStudent = form.dataset.form === 'studierende';
-    const du = isStudent;
-
-    if (!endpoint) {
-      window.location.href = buildMailto(form);
-      showStatus(status, 'is-info', du
-        ? `Dein E-Mail-Programm wurde mit deinen Angaben geöffnet. Bitte hänge deinen Lebenslauf (PDF) an und sende die E-Mail ab. Falls sich nichts geöffnet hat, schreib uns direkt an <a href="mailto:${EMAIL}">${EMAIL}</a>.`
-        : `Ihr E-Mail-Programm wurde mit Ihren Angaben geöffnet – bitte senden Sie die E-Mail ab. Falls sich nichts geöffnet hat, schreiben Sie uns direkt an <a href="mailto:${EMAIL}">${EMAIL}</a> oder rufen Sie an: <a href="tel:+493042099429">030 420 994 29</a>.`);
-      return;
-    }
 
     if (btn) {
       btn.disabled = true;
@@ -282,53 +263,40 @@
     }
 
     try {
+      if (window.location.protocol === 'file:') {
+        throw new Error('FILE_PROTOCOL');
+      }
+
       const res = await fetch(endpoint, {
         method: 'POST',
         body: new FormData(form),
         headers: { Accept: 'application/json' }
       });
-      if (!res.ok) throw new Error(String(res.status));
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok || (data && !data.ok)) {
+        const errorMsg = data && data.message ? data.message : null;
+        throw new Error(errorMsg || String(res.status));
+      }
+
       form.reset();
-      showStatus(status, 'is-success', du
-        ? '<strong>Danke, deine Angaben sind angekommen!</strong><br>Wir sehen uns dein Profil persönlich an und melden uns in der Regel innerhalb weniger Werktage bei dir.'
+      showStatus(status, 'is-success', isStudent
+        ? '<strong>Vielen Dank! Deine Angaben und dein Lebenslauf wurden erfolgreich übermittelt.</strong><br>Wir prüfen dein Profil und melden uns in der Regel innerhalb weniger Werktage persönlich bei dir.'
         : '<strong>Vielen Dank – Ihre Anfrage ist eingegangen.</strong><br>Wir melden uns in der Regel innerhalb eines Werktags persönlich bei Ihnen, um Ihren Bedarf kurz abzustimmen.');
     } catch (err) {
-      showStatus(status, 'is-error', `Das hat leider nicht geklappt. Bitte schreiben Sie uns direkt an <a href="mailto:${EMAIL}">${EMAIL}</a> oder rufen Sie an: <a href="tel:+493042099429">030 420 994 29</a>.`);
+      if (err.message === 'FILE_PROTOCOL') {
+        showStatus(status, 'is-info', '<strong>Lokale Vorschau (file://):</strong> Der automatische Versand und Datei-Upload läuft über das PHP-Backend auf dem Webserver (z. B. bei IONOS). Beim direkten Öffnen als lokale Datei kann PHP nicht ausgeführt werden. Auf dem Server wird die E-Mail mit Lebenslauf vollautomatisch an info@semesterwerk.de gesendet.');
+      } else {
+        const userMsg = err.message && !err.message.match(/^[0-9]+$/) ? err.message : null;
+        showStatus(status, 'is-error', userMsg || `Das hat leider nicht geklappt. Bitte schreiben Sie uns direkt an <a href="mailto:${EMAIL}">${EMAIL}</a> oder rufen Sie an: <a href="tel:+493042099429">030 420 994 29</a>.`);
+      }
     } finally {
       if (btn) {
         btn.disabled = false;
         btn.innerHTML = btn.dataset.label;
       }
     }
-  }
-
-  function buildMailto(form) {
-    const lines = [];
-    const seen = new Set();
-    form.querySelectorAll('input, select, textarea').forEach(el => {
-      if (!el.name || el.name === 'website_hp' || el.type === 'file' || el.type === 'checkbox' || seen.has(el.name)) return;
-      let value = '';
-      let label = '';
-      if (el.type === 'radio') {
-        seen.add(el.name);
-        const checked = form.querySelector(`input[name="${el.name}"]:checked`);
-        if (!checked) return;
-        value = checked.dataset.text || checked.value;
-        const legend = checked.closest('fieldset')?.querySelector('legend');
-        label = legend ? legend.textContent : el.name;
-      } else {
-        value = el.tagName === 'SELECT' ? (el.selectedOptions[0]?.textContent || '') : el.value;
-        const lab = form.querySelector(`label[for="${el.id}"]`);
-        label = lab ? lab.textContent : el.name;
-      }
-      value = value.trim();
-      if (!value || (el.tagName === 'SELECT' && el.value === '')) return;
-      label = label.replace(/\*|\(optional\)/g, '').trim();
-      lines.push(`${label}: ${value}`);
-    });
-    const subject = form.dataset.subject || 'Anfrage über semesterwerk.de';
-    const body = lines.join('\n') + '\n';
-    return `mailto:${EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   }
 
   function showStatus(el, cls, html) {
