@@ -41,9 +41,12 @@ Werden `style.css` oder `main.js` geändert, in `build.py` die Versionsnummer
 - **Formulare:** Ohne Server-Endpunkt öffnen sie das E-Mail-Programm mit den
   ausgefüllten Angaben. Sobald ein Endpunkt vorhanden ist, wird er am Formular in
   `data-endpoint=""` eingetragen; dann funktioniert auch der Lebenslauf-Upload.
-- **Impressum:** Umsatzsteuer-Identifikationsnummer ergänzen (im Text markiert).
-- **Datenschutz:** Hoster und Speicherdauer der Server-Protokolle ergänzen.
-- **AGB:** Mustertext, vor dem Livegang anwaltlich prüfen lassen.
+- **Rechtstexte:** Impressum, Datenschutzerklärung und AGB sind inhaltlich vollständig
+  (Stand November 2026, Hoster IONOS, USt-IdNr. eingetragen). Vor dem Livegang sollten
+  sie dennoch anwaltlich geprüft werden, insbesondere die AGB.
+- **Datenschutzbeauftragter:** Ob für eine Personalvermittlung wegen der
+  geschäftsmäßigen Übermittlung von Bewerberdaten nach § 38 Abs. 1 Satz 2 BDSG ein
+  Datenschutzbeauftragter zu benennen ist, ist noch zu klären.
 
 ## Lokal ansehen
 
