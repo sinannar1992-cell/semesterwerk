@@ -14,6 +14,8 @@ index.html, fuer-unternehmen.html, …   fertige Seiten (werden erzeugt, nicht v
 assets/css/style.css                   Stylesheet
 assets/js/main.js                      JavaScript
 assets/img/, assets/fonts/             Bilder und Schriften
+api/send-mail.php                      PHP-Endpunkt für automatischen Formularversand an info@semesterwerk.de
+api/kontakt.php                        Alias / Weiterleitung auf send-mail.php
 semesterwerk-logo/                     Logo-Paket (Original, mit Farb- und Schriftangaben)
 _build/                                Generator für die Seiten
 ```
@@ -38,9 +40,11 @@ Werden `style.css` oder `main.js` geändert, in `build.py` die Versionsnummer
 
 - **Schriftart:** `assets/fonts/Sora-Variable.woff2` fehlt noch. Solange die Datei
   nicht vorhanden ist, zeigt die Seite eine Systemschrift.
-- **Formulare:** Ohne Server-Endpunkt öffnen sie das E-Mail-Programm mit den
-  ausgefüllten Angaben. Sobald ein Endpunkt vorhanden ist, wird er am Formular in
-  `data-endpoint=""` eingetragen; dann funktioniert auch der Lebenslauf-Upload.
+- **Formulare:** Sind vollständig angebunden. Das PHP-Skript `api/send-mail.php` verarbeitet
+  Anfragen von Unternehmen, Studierenden-Registrierungen (inkl. PDF-Lebenslauf als Anhang)
+  und allgemeine Kontaktnachrichten. Alle Pflichtfelder werden serverseitig validiert,
+  ein Honeypot schützt vor Spam, und die strukturierte E-Mail wird direkt an `info@semesterwerk.de`
+  gesendet (mit Absender-E-Mail als `Reply-To`). Funktioniert direkt auf IONOS Webhosting via PHP `mail()`.
 - **Rechtstexte:** Impressum, Datenschutzerklärung und AGB sind inhaltlich vollständig
   (Stand November 2026, Hoster IONOS, USt-IdNr. eingetragen). Vor dem Livegang sollten
   sie dennoch anwaltlich geprüft werden, insbesondere die AGB.

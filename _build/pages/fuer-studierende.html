@@ -103,7 +103,8 @@
         </div>
 
         <div class="form-card">
-          <form data-form="studierende" data-endpoint="" data-subject="Registrierung im semesterwerk-Netzwerk" action="#" method="post" enctype="multipart/form-data">
+          <form data-form="studierende" data-endpoint="api/send-mail.php" data-subject="Registrierung im semesterwerk-Netzwerk" action="api/send-mail.php" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="form_type" value="studierende">
             <input type="text" name="website_hp" class="form-honeypot" tabindex="-1" autocomplete="off" aria-hidden="true">
 
             <div class="form-grid cols-2">
