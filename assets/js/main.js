@@ -114,6 +114,18 @@
       form.addEventListener('submit', (e) => handleSubmit(e, form));
     });
 
+    // Erfolgsmeldung nach Absenden und Rückleitung (z. B. via FormSubmit _next)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('erfolg') === '1') {
+      document.querySelectorAll('form[data-form]').forEach(form => {
+        const status = form.querySelector('.form-status');
+        const isStudent = form.dataset.form === 'studierende';
+        showStatus(status, 'is-success', isStudent
+          ? '<strong>Vielen Dank! Deine Angaben und dein Lebenslauf wurden erfolgreich übermittelt.</strong><br>Wir prüfen dein Profil persönlich und melden uns in der Regel innerhalb weniger Werktage bei dir.'
+          : '<strong>Vielen Dank – Ihre Anfrage ist eingegangen.</strong><br>Wir melden uns in der Regel innerhalb eines Werktags persönlich bei Ihnen, um Ihren Bedarf kurz abzustimmen.');
+      });
+    }
+
     // 8. Bewegung: Inhalte sind ohne JS sichtbar, erst hier wird das Einblenden freigegeben
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (!reduce) {
@@ -229,20 +241,26 @@
 
   /**
    * Formularversand.
-   * Sendet die Formulardaten (inklusive etwaiger Datei-Uploads wie dem Lebenslauf)
-   * per fetch() direkt im Hintergrund an das PHP-Backend.
-   * Es wird zu keinem Zeitpunkt das E-Mail-Programm des Nutzers geöffnet.
+   * - Bei Formularen mit Datei-Upload (z. B. Studierende mit Lebenslauf) erfolgt die Übermittlung
+   *   nativ als multipart/form-data an den Formular-Endpunkt, damit die Binärdatei garantiert
+   *   als echter E-Mail-Anhang bei info@semesterwerk.de ankommt.
+   * - Anschließend leitet der Dienst via _next direkt zurück auf die Seite (?erfolg=1).
+   * - Das lokale E-Mail-Programm des Nutzers wird zu keinem Zeitpunkt geöffnet.
    */
   async function handleSubmit(e, form) {
-    e.preventDefault();
-
     const status = form.querySelector('.form-status');
     const btn = form.querySelector('button[type="submit"]');
 
-    const hp = form.querySelector('input[name="website_hp"]');
-    if (hp && hp.value.trim() !== '') return;
+    // Honeypot-Check: Bots abfangen
+    const hp = form.querySelector('input[name="website_hp"]') || form.querySelector('input[name="_honey"]');
+    if (hp && hp.value.trim() !== '') {
+      e.preventDefault();
+      return;
+    }
 
+    // Pflichtfeld-Validierung
     if (!form.checkValidity()) {
+      e.preventDefault();
       const firstInvalid = form.querySelector(':invalid');
       form.querySelectorAll('.form-control').forEach(el => el.classList.toggle('is-invalid', !el.checkValidity()));
       showStatus(status, 'is-error', form.dataset.form === 'studierende'
@@ -253,10 +271,7 @@
     }
     form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
 
-    const endpoint = (form.dataset.endpoint || form.action || 'https://formsubmit.co/ajax/info@semesterwerk.de').trim();
-    const isStudent = form.dataset.form === 'studierende';
-
-    // FormSubmit erwartet für Datei-Anhänge zwingend den Feldnamen 'attachment'
+    // Sicherstellen, dass Datei-Uploads den Feldnamen 'attachment' tragen
     form.querySelectorAll('input[type="file"]').forEach(f => {
       if (!f.name || f.name === 'lebenslauf') {
         f.name = 'attachment';
@@ -264,57 +279,62 @@
     });
 
     if (btn) {
-      btn.disabled = true;
       btn.dataset.label = btn.innerHTML;
       btn.textContent = 'Wird gesendet …';
+      btn.style.opacity = '0.7';
+      btn.style.pointerEvents = 'none';
     }
 
-    try {
-      if (window.location.protocol === 'file:') {
-        throw new Error('FILE_PROTOCOL');
+    // Wenn ein separater data-endpoint gesetzt ist, sende per fetch()
+    const endpoint = (form.dataset.endpoint || '').trim();
+    if (endpoint) {
+      e.preventDefault();
+      try {
+        if (window.location.protocol === 'file:') {
+          throw new Error('FILE_PROTOCOL');
+        }
+
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          body: new FormData(form),
+          headers: { Accept: 'application/json' }
+        });
+
+        const data = await res.json().catch(() => null);
+        const isSuccess = (data && (data.success === 'true' || data.success === true || data.ok === true))
+          || (res.ok && (!data || data.success !== 'false'));
+
+        if (isSuccess) {
+          form.reset();
+          const isStudent = form.dataset.form === 'studierende';
+          showStatus(status, 'is-success', isStudent
+            ? '<strong>Vielen Dank! Deine Angaben und dein Lebenslauf wurden erfolgreich übermittelt.</strong><br>Wir prüfen dein Profil und melden uns in der Regel innerhalb weniger Werktage persönlich bei dir.'
+            : '<strong>Vielen Dank – Ihre Anfrage ist eingegangen.</strong><br>Wir melden uns in der Regel innerhalb eines Werktags persönlich bei Ihnen, um Ihren Bedarf kurz abzustimmen.');
+          return;
+        }
+
+        const errorMsg = data && data.message ? data.message : null;
+        throw new Error(errorMsg || String(res.status));
+      } catch (err) {
+        if (err.message === 'FILE_PROTOCOL') {
+          showStatus(status, 'is-info', '<strong>Lokale Vorschau (file://):</strong> Der automatische Versand läuft über den Webserver. Sobald die Seite auf der Domain aufgerufen wird, werden alle Angaben und die PDF-Datei direkt im Hintergrund an info@semesterwerk.de gesendet.');
+        } else {
+          const userMsg = err.message && !err.message.match(/^[0-9]+$/) ? err.message : null;
+          showStatus(status, 'is-error', userMsg || `Das hat leider nicht geklappt. Bitte schreiben Sie uns direkt an <a href="mailto:${EMAIL}">${EMAIL}</a> oder rufen Sie an: <a href="tel:+493042099429">030 420 994 29</a>.`);
+        }
+      } finally {
+        if (btn) {
+          btn.style.opacity = '1';
+          btn.style.pointerEvents = '';
+          btn.innerHTML = btn.dataset.label;
+        }
       }
-
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        body: new FormData(form),
-        headers: { Accept: 'application/json' }
-      });
-
-      const data = await res.json().catch(() => null);
-
-      // Erfolgsprüfung für FormSubmit (data.success === 'true') und PHP (data.ok === true)
-      const isSuccess = (data && (data.success === 'true' || data.success === true || data.ok === true))
-        || (res.ok && (!data || data.success !== 'false'));
-
-      if (isSuccess) {
-        form.reset();
-        showStatus(status, 'is-success', isStudent
-          ? '<strong>Vielen Dank! Deine Angaben und dein Lebenslauf wurden erfolgreich übermittelt.</strong><br>Wir prüfen dein Profil und melden uns in der Regel innerhalb weniger Werktage persönlich bei dir.'
-          : '<strong>Vielen Dank – Ihre Anfrage ist eingegangen.</strong><br>Wir melden uns in der Regel innerhalb eines Werktags persönlich bei Ihnen, um Ihren Bedarf kurz abzustimmen.');
-        return;
-      }
-
-      // Einmalige FormSubmit-Aktivierung bei der allerersten Nutzung
-      if (data && data.message && data.message.toLowerCase().includes('activation')) {
-        showStatus(status, 'is-info', '<strong>Fast geschafft!</strong> Zur einmaligen Freischaltung des Formulars wurde eine E-Mail an <em>info@semesterwerk.de</em> gesendet. Bitte dort auf den Aktivierungslink („Activate Form“) klicken, danach werden alle Anfragen sofort zugestellt.');
-        return;
-      }
-
-      const errorMsg = data && data.message ? data.message : null;
-      throw new Error(errorMsg || String(res.status));
-    } catch (err) {
-      if (err.message === 'FILE_PROTOCOL') {
-        showStatus(status, 'is-info', '<strong>Lokale Vorschau (file://):</strong> Der automatische Versand läuft über den Webserver. Sobald die Seite auf der Domain aufgerufen wird, werden alle Angaben und die PDF-Datei direkt im Hintergrund an info@semesterwerk.de gesendet.');
-      } else {
-        const userMsg = err.message && !err.message.match(/^[0-9]+$/) ? err.message : null;
-        showStatus(status, 'is-error', userMsg || `Das hat leider nicht geklappt. Bitte schreiben Sie uns direkt an <a href="mailto:${EMAIL}">${EMAIL}</a> oder rufen Sie an: <a href="tel:+493042099429">030 420 994 29</a>.`);
-      }
-    } finally {
-      if (btn) {
-        btn.disabled = false;
-        btn.innerHTML = btn.dataset.label;
-      }
+      return;
     }
+
+    // Kein data-endpoint: Natives HTML-Multipart-Submit direkt an action (FormSubmit)
+    // KEIN e.preventDefault() -> Der Browser überträgt die PDF-Datei nativ als echten Anhang!
+    // FormSubmit leitet nach dem Senden automatisch auf die _next-URL (?erfolg=1) zurück.
   }
 
   function showStatus(el, cls, html) {

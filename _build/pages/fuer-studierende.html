@@ -103,7 +103,8 @@
         </div>
 
         <div class="form-card">
-          <form data-form="studierende" data-endpoint="https://formsubmit.co/ajax/info@semesterwerk.de" data-subject="Registrierung im semesterwerk-Netzwerk" action="https://formsubmit.co/info@semesterwerk.de" method="post" enctype="multipart/form-data">
+          <form data-form="studierende" action="https://formsubmit.co/info@semesterwerk.de" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="_next" value="https://semesterwerk.de/fuer-studierende.html?erfolg=1#anmeldung">
             <input type="hidden" name="_subject" value="Registrierung im semesterwerk-Netzwerk">
             <input type="hidden" name="_template" value="table">
             <input type="hidden" name="_captcha" value="false">

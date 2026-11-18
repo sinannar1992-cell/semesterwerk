@@ -45,7 +45,8 @@
             <h2 id="form-title" style="font-size: 1.4rem;">Nachricht senden</h2>
             <p>Für Fragen, Terminwünsche oder Feedback.</p>
           </div>
-          <form data-form="kontakt" data-endpoint="https://formsubmit.co/ajax/info@semesterwerk.de" data-subject="Kontaktanfrage über semesterwerk.de" action="https://formsubmit.co/info@semesterwerk.de" method="post">
+          <form data-form="kontakt" action="https://formsubmit.co/info@semesterwerk.de" method="post">
+            <input type="hidden" name="_next" value="https://semesterwerk.de/kontakt.html?erfolg=1#kontakt">
             <input type="hidden" name="_subject" value="Kontaktanfrage über semesterwerk.de">
             <input type="hidden" name="_template" value="table">
             <input type="hidden" name="_captcha" value="false">

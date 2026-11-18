@@ -218,7 +218,7 @@ def page(fname, title, desc, body, sticky=None, jsonld=None, og_title=None):
   <link rel="icon" type="image/png" sizes="192x192" href="assets/img/png/semesterwerk-icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/img/png/semesterwerk-icon-180.png">
 {preload}  <link rel="stylesheet" href="assets/css/style.css?v=20261118">
-  <script src="assets/js/main.js?v=20261118-4" defer></script>
+  <script src="assets/js/main.js?v=20261118-5" defer></script>
 {ld}</head>
 <body>
 
