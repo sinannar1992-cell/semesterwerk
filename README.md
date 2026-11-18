@@ -44,9 +44,14 @@ Werden `style.css` oder `main.js` geändert, in `build.py` die Versionsnummer
 - **Rechtstexte:** Impressum, Datenschutzerklärung und AGB sind inhaltlich vollständig
   (Stand November 2026, Hoster IONOS, USt-IdNr. eingetragen). Vor dem Livegang sollten
   sie dennoch anwaltlich geprüft werden, insbesondere die AGB.
-- **Datenschutzbeauftragter:** Ob für eine Personalvermittlung wegen der
-  geschäftsmäßigen Übermittlung von Bewerberdaten nach § 38 Abs. 1 Satz 2 BDSG ein
-  Datenschutzbeauftragter zu benennen ist, ist noch zu klären.
+- **Datenschutzbeauftragter:** Nach derzeitiger Einschätzung nicht erforderlich. Die
+  20-Personen-Schwelle des § 38 Abs. 1 Satz 1 BDSG wird nicht erreicht, eine
+  Datenschutz-Folgenabschätzung ist nicht veranlasst, und die „geschäftsmäßige
+  Übermittlung“ nach Satz 2 zielt laut Aufsichtsbehörden auf Stellen, die Daten
+  „erheben und verkaufen oder vermieten“ (Adresshändler, Auskunfteien,
+  Meinungsforschung). Eine Bestätigung durch die Berliner Aufsichtsbehörde oder eine
+  anwaltliche Prüfung steht aus. Der Inhaber selbst kann die Rolle nicht übernehmen
+  (Interessenkonflikt, Art. 38 Abs. 6 DSGVO).
 
 ## Lokal ansehen
 
