@@ -285,18 +285,25 @@ module.exports = async function handler(req, res) {
     const timestamp = new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin' });
     const mail = buildMail(formType, fields, files, timestamp);
 
-    // IONOS_PASSWORD hat eine frühere Version dieser Funktion gelesen und bleibt als Alternative gültig.
-    const password = process.env.SMTP_PASSWORD || process.env.IONOS_PASSWORD;
+    // Unterstützt verschiedene Schreibweisen für das E-Mail-Passwort
+    const password = process.env.SMTP_PASSWORD
+      || process.env.IONOS_PASSWORD
+      || process.env.SMTP_PASS
+      || process.env.EMAIL_PASSWORD
+      || process.env.MAIL_PASSWORD
+      || process.env.IONOS_PASS;
     if (!password) {
       console.error('Formularversand: Umgebungsvariable SMTP_PASSWORD ist in dieser Vercel-Version nicht gesetzt.');
       return res.status(500).json({ ok: false, error: 'smtp_not_configured', message: GENERIC_ERROR });
     }
 
-    const user = process.env.SMTP_USER || RECIPIENT;
+    const user = process.env.SMTP_USER || process.env.EMAIL_USER || process.env.MAIL_USER || RECIPIENT;
+    const host = process.env.SMTP_HOST || 'smtp.ionos.de';
+    const port = parseInt(process.env.SMTP_PORT || '465', 10);
     const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.ionos.de',
-      port: parseInt(process.env.SMTP_PORT || '465', 10),
-      secure: (process.env.SMTP_PORT || '465') === '465',
+      host,
+      port,
+      secure: port === 465,
       auth: { user, pass: password },
     });
 
