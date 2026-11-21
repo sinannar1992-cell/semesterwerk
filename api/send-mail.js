@@ -285,9 +285,10 @@ module.exports = async function handler(req, res) {
     const timestamp = new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin' });
     const mail = buildMail(formType, fields, files, timestamp);
 
-    const password = process.env.SMTP_PASSWORD;
+    // IONOS_PASSWORD hat eine frühere Version dieser Funktion gelesen und bleibt als Alternative gültig.
+    const password = process.env.SMTP_PASSWORD || process.env.IONOS_PASSWORD;
     if (!password) {
-      console.error('Formularversand: Umgebungsvariable SMTP_PASSWORD ist nicht gesetzt.');
+      console.error('Formularversand: Umgebungsvariable SMTP_PASSWORD ist in dieser Vercel-Version nicht gesetzt.');
       return res.status(500).json({ ok: false, error: 'smtp_not_configured', message: GENERIC_ERROR });
     }
 
@@ -313,8 +314,13 @@ module.exports = async function handler(req, res) {
     if (err instanceof UserError) {
       return res.status(err.status).json({ ok: false, message: err.message });
     }
-    // Keine Formularinhalte protokollieren, nur die technische Ursache.
-    console.error('Formularversand fehlgeschlagen:', err && (err.code || err.message));
-    return res.status(500).json({ ok: false, message: GENERIC_ERROR });
+    // Keine Formularinhalte protokollieren, nur die technische Ursache. Der Code in der
+    // Antwort hilft bei der Fehlersuche; Besucher sehen nur die allgemeine Meldung.
+    const code = err && err.code;
+    console.error('Formularversand fehlgeschlagen:', code || (err && err.message));
+    const error = code === 'EAUTH' ? 'smtp_auth_failed'
+      : ['ECONNECTION', 'ETIMEDOUT', 'ESOCKET', 'EDNS'].includes(code) ? 'smtp_connection_failed'
+      : 'send_failed';
+    return res.status(500).json({ ok: false, error, message: GENERIC_ERROR });
   }
 };
