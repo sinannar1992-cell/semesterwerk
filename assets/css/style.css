@@ -125,7 +125,9 @@ p:last-child { margin-bottom: 0; }
 .container { width: 100%; max-width: var(--container); margin: 0 auto; padding: 0 var(--gutter); }
 .container-narrow { max-width: 860px; }
 
-.section { padding: 4.5rem 0; position: relative; }
+/* overflow-x: clip schneidet schräg gestellte Karten am Rand ab, ohne einen
+   Scrollbereich zu erzeugen; position: sticky im Inneren funktioniert weiter. */
+.section { padding: 4.5rem 0; position: relative; overflow-x: clip; }
 @media (min-width: 1024px) { .section { padding: 7.5rem 0; } }
 .section-tight { padding: 3.5rem 0; }
 .section-alt { background: var(--weiss); }
