@@ -103,12 +103,8 @@
         </div>
 
         <div class="form-card">
-          <form data-form="studierende" action="https://formsubmit.co/info@semesterwerk.de" method="post" enctype="multipart/form-data">
-            <input type="hidden" name="_next" value="https://semesterwerk.de/fuer-studierende.html?erfolg=1#anmeldung">
-            <input type="hidden" name="_subject" value="Registrierung im semesterwerk-Netzwerk">
-            <input type="hidden" name="_template" value="table">
-            <input type="hidden" name="_captcha" value="false">
-            <input type="text" name="_honey" class="form-honeypot" tabindex="-1" autocomplete="off" aria-hidden="true" style="display:none">
+          <form data-form="studierende" data-endpoint="/api/send-mail" action="/api/send-mail" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="form_type" value="studierende">
             <input type="text" name="website_hp" class="form-honeypot" tabindex="-1" autocomplete="off" aria-hidden="true">
 
             <div class="form-grid cols-2">
@@ -167,7 +163,7 @@
                 <input type="text" id="location" name="ort" class="form-control" placeholder="z. B. München, hybrid oder komplett remote" required>
               </div>
               <div class="form-group full">
-                <label for="cv" class="form-label">Lebenslauf (PDF, max. 10 MB) *</label>
+                <label for="cv" class="form-label">Lebenslauf (PDF, max. 4 MB) *</label>
                 <input type="file" id="cv" name="attachment" class="form-control" accept=".pdf,application/pdf" required>
                 <span class="form-hint" data-file-hint="cv">Ein tabellarischer Lebenslauf genügt.</span>
               </div>

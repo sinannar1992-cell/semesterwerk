@@ -10,3 +10,4 @@ _backup-*.zip
 .claude/
 .vscode/
 .idea/
+node_modules/

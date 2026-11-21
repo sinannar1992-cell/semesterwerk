@@ -114,18 +114,6 @@
       form.addEventListener('submit', (e) => handleSubmit(e, form));
     });
 
-    // Erfolgsmeldung nach Absenden und Rückleitung (z. B. via FormSubmit _next)
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('erfolg') === '1') {
-      document.querySelectorAll('form[data-form]').forEach(form => {
-        const status = form.querySelector('.form-status');
-        const isStudent = form.dataset.form === 'studierende';
-        showStatus(status, 'is-success', isStudent
-          ? '<strong>Vielen Dank! Deine Angaben und dein Lebenslauf wurden erfolgreich übermittelt.</strong><br>Wir prüfen dein Profil persönlich und melden uns in der Regel innerhalb weniger Werktage bei dir.'
-          : '<strong>Vielen Dank – Ihre Anfrage ist eingegangen.</strong><br>Wir melden uns in der Regel innerhalb eines Werktags persönlich bei Ihnen, um Ihren Bedarf kurz abzustimmen.');
-      });
-    }
-
     // 8. Bewegung: Inhalte sind ohne JS sichtbar, erst hier wird das Einblenden freigegeben
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (!reduce) {
@@ -239,31 +227,28 @@
     if (yearEl) yearEl.textContent = new Date().getFullYear();
   });
 
+  // Vercel nimmt pro Anfrage höchstens 4,5 MB an; die Serverfunktion prüft dieselbe Grenze.
+  const MAX_FILE_BYTES = 4 * 1024 * 1024;
+
   /**
-   * Formularversand.
-   * - Bei Formularen mit Datei-Upload (z. B. Studierende mit Lebenslauf) erfolgt die Übermittlung
-   *   nativ als multipart/form-data an den Formular-Endpunkt, damit die Binärdatei garantiert
-   *   als echter E-Mail-Anhang bei info@semesterwerk.de ankommt.
-   * - Anschließend leitet der Dienst via _next direkt zurück auf die Seite (?erfolg=1).
-   * - Das lokale E-Mail-Programm des Nutzers wird zu keinem Zeitpunkt geöffnet.
+   * Formularversand an die Serverfunktion /api/send-mail (Vercel).
+   * Sie verschickt die Angaben an info@semesterwerk.de, den Lebenslauf als PDF-Anhang.
    */
   async function handleSubmit(e, form) {
+    e.preventDefault();
+
     const status = form.querySelector('.form-status');
     const btn = form.querySelector('button[type="submit"]');
+    const du = form.dataset.form === 'studierende';
+    const fallback = `Das hat leider nicht geklappt. Bitte schreiben Sie uns direkt an <a href="mailto:${EMAIL}">${EMAIL}</a> oder rufen Sie an: <a href="tel:+493042099429">030 420 994 29</a>.`;
 
-    // Honeypot-Check: Bots abfangen
-    const hp = form.querySelector('input[name="website_hp"]') || form.querySelector('input[name="_honey"]');
-    if (hp && hp.value.trim() !== '') {
-      e.preventDefault();
-      return;
-    }
+    const hp = form.querySelector('input[name="website_hp"]');
+    if (hp && hp.value.trim() !== '') return;
 
-    // Pflichtfeld-Validierung
     if (!form.checkValidity()) {
-      e.preventDefault();
       const firstInvalid = form.querySelector(':invalid');
       form.querySelectorAll('.form-control').forEach(el => el.classList.toggle('is-invalid', !el.checkValidity()));
-      showStatus(status, 'is-error', form.dataset.form === 'studierende'
+      showStatus(status, 'is-error', du
         ? 'Bitte fülle alle Pflichtfelder (*) aus.'
         : 'Bitte füllen Sie alle Pflichtfelder (*) aus.');
       if (firstInvalid) firstInvalid.focus();
@@ -271,70 +256,68 @@
     }
     form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
 
-    // Sicherstellen, dass Datei-Uploads den Feldnamen 'attachment' tragen
-    form.querySelectorAll('input[type="file"]').forEach(f => {
-      if (!f.name || f.name === 'lebenslauf') {
-        f.name = 'attachment';
+    // Lebenslauf vor dem Hochladen prüfen, damit niemand umsonst wartet
+    const fileInput = form.querySelector('input[type="file"]');
+    const file = fileInput && fileInput.files[0];
+    if (file) {
+      const looksPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+      if (!looksPdf || file.size > MAX_FILE_BYTES) {
+        fileInput.classList.add('is-invalid');
+        showStatus(status, 'is-error', !looksPdf
+          ? 'Bitte lade deinen Lebenslauf als PDF-Datei hoch.'
+          : 'Dein Lebenslauf ist größer als 4 MB. Bitte lade eine kleinere PDF-Datei hoch.');
+        fileInput.focus();
+        return;
       }
-    });
-
-    if (btn) {
-      btn.dataset.label = btn.innerHTML;
-      btn.textContent = 'Wird gesendet …';
-      btn.style.opacity = '0.7';
-      btn.style.pointerEvents = 'none';
     }
 
-    // Wenn ein separater data-endpoint gesetzt ist, sende per fetch()
-    const endpoint = (form.dataset.endpoint || '').trim();
-    if (endpoint) {
-      e.preventDefault();
-      try {
-        if (window.location.protocol === 'file:') {
-          throw new Error('FILE_PROTOCOL');
-        }
-
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          body: new FormData(form),
-          headers: { Accept: 'application/json' }
-        });
-
-        const data = await res.json().catch(() => null);
-        const isSuccess = (data && (data.success === 'true' || data.success === true || data.ok === true))
-          || (res.ok && (!data || data.success !== 'false'));
-
-        if (isSuccess) {
-          form.reset();
-          const isStudent = form.dataset.form === 'studierende';
-          showStatus(status, 'is-success', isStudent
-            ? '<strong>Vielen Dank! Deine Angaben und dein Lebenslauf wurden erfolgreich übermittelt.</strong><br>Wir prüfen dein Profil und melden uns in der Regel innerhalb weniger Werktage persönlich bei dir.'
-            : '<strong>Vielen Dank – Ihre Anfrage ist eingegangen.</strong><br>Wir melden uns in der Regel innerhalb eines Werktags persönlich bei Ihnen, um Ihren Bedarf kurz abzustimmen.');
-          return;
-        }
-
-        const errorMsg = data && data.message ? data.message : null;
-        throw new Error(errorMsg || String(res.status));
-      } catch (err) {
-        if (err.message === 'FILE_PROTOCOL') {
-          showStatus(status, 'is-info', '<strong>Lokale Vorschau (file://):</strong> Der automatische Versand läuft über den Webserver. Sobald die Seite auf der Domain aufgerufen wird, werden alle Angaben und die PDF-Datei direkt im Hintergrund an info@semesterwerk.de gesendet.');
-        } else {
-          const userMsg = err.message && !err.message.match(/^[0-9]+$/) ? err.message : null;
-          showStatus(status, 'is-error', userMsg || `Das hat leider nicht geklappt. Bitte schreiben Sie uns direkt an <a href="mailto:${EMAIL}">${EMAIL}</a> oder rufen Sie an: <a href="tel:+493042099429">030 420 994 29</a>.`);
-        }
-      } finally {
-        if (btn) {
-          btn.style.opacity = '1';
-          btn.style.pointerEvents = '';
-          btn.innerHTML = btn.dataset.label;
-        }
-      }
+    if (window.location.protocol === 'file:') {
+      showStatus(status, 'is-info', '<strong>Lokale Vorschau:</strong> Der Versand funktioniert nur, wenn die Seite über die Domain aufgerufen wird.');
       return;
     }
 
-    // Kein data-endpoint: Natives HTML-Multipart-Submit direkt an action (FormSubmit)
-    // KEIN e.preventDefault() -> Der Browser überträgt die PDF-Datei nativ als echten Anhang!
-    // FormSubmit leitet nach dem Senden automatisch auf die _next-URL (?erfolg=1) zurück.
+    if (btn) {
+      btn.disabled = true;
+      btn.dataset.label = btn.innerHTML;
+      btn.textContent = 'Wird gesendet …';
+    }
+
+    try {
+      const res = await fetch(form.dataset.endpoint || '/api/send-mail', {
+        method: 'POST',
+        body: new FormData(form),
+        headers: { Accept: 'application/json' }
+      });
+
+      if (res.status === 413) {
+        showStatus(status, 'is-error', 'Der Lebenslauf ist zu groß. Bitte lade eine PDF-Datei mit höchstens 4 MB hoch.');
+        return;
+      }
+
+      const data = await res.json().catch(() => null);
+
+      if (res.ok && data && data.ok) {
+        form.reset();
+        showStatus(status, 'is-success', du
+          ? '<strong>Danke, deine Angaben und dein Lebenslauf sind angekommen!</strong><br>Wir sehen uns dein Profil persönlich an und melden uns in der Regel innerhalb weniger Werktage bei dir.'
+          : '<strong>Vielen Dank – Ihre Anfrage ist eingegangen.</strong><br>Wir melden uns in der Regel innerhalb eines Werktags persönlich bei Ihnen, um Ihren Bedarf kurz abzustimmen.');
+        return;
+      }
+
+      // Meldungen der Serverfunktion sind für Besucher formuliert; als Text einsetzen
+      showStatus(status, 'is-error', data && data.message ? escapeHtml(data.message) : fallback);
+    } catch (err) {
+      showStatus(status, 'is-error', fallback);
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = btn.dataset.label;
+      }
+    }
+  }
+
+  function escapeHtml(text) {
+    return String(text).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   }
 
   function showStatus(el, cls, html) {

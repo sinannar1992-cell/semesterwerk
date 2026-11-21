@@ -1,0 +1,25 @@
+{
+  "name": "personalvermittlung",
+  "version": "1.0.0",
+  "description": "Statische Website für semesterwerk, die Personalvermittlung von Studierenden an Unternehmen für Praktika und Werkstudentenstellen.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sinannar1992-cell/semesterwerk.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/sinannar1992-cell/semesterwerk/issues"
+  },
+  "homepage": "https://github.com/sinannar1992-cell/semesterwerk#readme",
+  "dependencies": {
+    "busboy": "^1.6.0",
+    "nodemailer": "^10.6.0"
+  }
+}

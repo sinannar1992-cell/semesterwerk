@@ -40,14 +40,25 @@ Werden `style.css` oder `main.js` geändert, in `build.py` die Versionsnummer
 
 - **Schriftart:** `assets/fonts/Sora-Variable.woff2` fehlt noch. Solange die Datei
   nicht vorhanden ist, zeigt die Seite eine Systemschrift.
-- **Formulare:** Sind vollständig angebunden. Das PHP-Skript `api/send-mail.php` verarbeitet
-  Anfragen von Unternehmen, Studierenden-Registrierungen (inkl. PDF-Lebenslauf als Anhang)
-  und allgemeine Kontaktnachrichten. Alle Pflichtfelder werden serverseitig validiert,
-  ein Honeypot schützt vor Spam, und die strukturierte E-Mail wird direkt an `info@semesterwerk.de`
-  gesendet (mit Absender-E-Mail als `Reply-To`). Funktioniert direkt auf IONOS Webhosting via PHP `mail()`.
+- **Hosting:** Die Website läuft auf Vercel. Gewerbliche Nutzung ist laut Vercels
+  Nutzungsbedingungen nur in einem bezahlten Tarif zulässig, und nur dort gilt Vercels
+  Vertrag zur Auftragsverarbeitung (Art. 28 DSGVO). Die Datenschutzerklärung setzt
+  diesen Vertrag voraus.
 - **Rechtstexte:** Impressum, Datenschutzerklärung und AGB sind inhaltlich vollständig
-  (Stand November 2026, Hoster IONOS, USt-IdNr. eingetragen). Vor dem Livegang sollten
-  sie dennoch anwaltlich geprüft werden, insbesondere die AGB.
+  (Stand November 2026, Hosting Vercel, E-Mail IONOS, USt-IdNr. eingetragen). Vor dem
+  Livegang sollten sie dennoch anwaltlich geprüft werden, insbesondere die AGB.
+
+## Formularversand
+
+Alle drei Formulare schicken ihre Daten per `fetch()` an die Serverfunktion
+`api/send-mail.js` (Vercel, Region Frankfurt laut `vercel.json`). Sie prüft die Angaben
+und verschickt eine E-Mail an `info@semesterwerk.de` über den SMTP-Server von IONOS.
+Der Lebenslauf der Studierenden kommt als PDF-Anhang mit (höchstens 4 MB; mehr nimmt
+Vercel pro Anfrage nicht an). Gespeichert wird unterwegs nichts.
+
+Dafür muss in Vercel unter *Project → Settings → Environment Variables* die Variable
+`SMTP_PASSWORD` mit dem Passwort des Postfachs `info@semesterwerk.de` hinterlegt sein.
+Optional lassen sich `SMTP_USER`, `SMTP_HOST` und `SMTP_PORT` überschreiben.
 - **Datenschutzbeauftragter:** Nach derzeitiger Einschätzung nicht erforderlich. Die
   20-Personen-Schwelle des § 38 Abs. 1 Satz 1 BDSG wird nicht erreicht, eine
   Datenschutz-Folgenabschätzung ist nicht veranlasst, und die „geschäftsmäßige
