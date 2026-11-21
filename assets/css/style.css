@@ -82,12 +82,15 @@ strong, b { font-weight: 600; }
 }
 
 /* ---------- Typografie ---------- */
-h1, h2, h3, h4 { font-weight: 700; line-height: 1.08; letter-spacing: -0.035em; text-wrap: balance; }
-h1 { font-size: clamp(2.35rem, 1.15rem + 4.9vw, 4.75rem); line-height: 1; letter-spacing: -0.045em; margin-bottom: 1.5rem; }
+h1, h2, h3, h4, .display { font-weight: 700; line-height: 1.08; letter-spacing: -0.035em; text-wrap: balance; }
+h1, .display { font-size: clamp(2.35rem, 1.15rem + 4.9vw, 4.75rem); line-height: 1; letter-spacing: -0.045em; margin-bottom: 1.5rem; }
+/* Die H1 trägt die Suchbegriffe im Stil der Kennzeile; der große Leitsatz darunter ist .display */
+h1.label { line-height: 1.5; text-wrap: pretty; }
+.display { color: var(--tinte); }
 h2 { font-size: clamp(1.8rem, 1.15rem + 2.5vw, 3.1rem); margin-bottom: 1.1rem; }
 h3 { font-size: 1.2rem; line-height: 1.25; letter-spacing: -0.02em; margin-bottom: .5rem; }
 h4 { font-size: 1rem; line-height: 1.3; letter-spacing: -0.01em; }
-.light, h1 em, h2 em { font-weight: 300; font-style: normal; }
+.light, h1 em, h2 em, .display em { font-weight: 300; font-style: normal; }
 
 p { color: var(--grau); margin-bottom: 1rem; text-wrap: pretty; }
 p:last-child { margin-bottom: 0; }
@@ -282,7 +285,7 @@ p:last-child { margin-bottom: 0; }
 
 .page-hero { padding: 3rem 0 3.5rem; }
 @media (min-width: 1024px) { .page-hero { padding: 5rem 0 5rem; } }
-.page-hero h1 { font-size: clamp(2.2rem, 1.2rem + 3.9vw, 4rem); }
+.page-hero h1:not(.label), .page-hero .display { font-size: clamp(2.2rem, 1.2rem + 3.9vw, 4rem); }
 .page-hero .hero-content { max-width: 860px; }
 
 /* Listen mit Punkt statt Haken */
@@ -859,3 +862,39 @@ body.has-sticky-cta .site-footer { padding-bottom: calc(5.5rem + env(safe-area-i
 }
 
 @media print { .anim .rv, .anim .sieve .dots i { opacity: 1 !important; transform: none !important; } .site-header, .sticky-cta, .ticker { display: none; } }
+
+/* ---------- Ratgeber-Artikel ---------- */
+.article { max-width: 760px; }
+.article h2 { font-size: clamp(1.45rem, 1.15rem + 1.1vw, 2rem); margin: 3.5rem 0 1rem; scroll-margin-top: calc(var(--header-h) + 24px); }
+.article h3 { font-size: 1.1rem; margin: 1.75rem 0 .5rem; }
+.article p, .article li { font-size: 1.03rem; line-height: 1.7; color: var(--grau); }
+.article strong { color: var(--tinte); }
+.article a { color: var(--tinte); text-decoration: underline; text-decoration-color: var(--koralle); text-underline-offset: 3px; }
+.article ul, .article ol { margin: 0 0 1.25rem; padding-left: 1.4rem; display: grid; gap: .55rem; }
+.article li { position: relative; }
+.article ul > li::before { content: ''; position: absolute; left: -1.15rem; top: .68em; width: 6px; height: 6px; border-radius: 50%; background: var(--koralle); }
+.article ol { counter-reset: schritt; }
+.article ol > li { counter-increment: schritt; }
+.article ol > li::before { content: counter(schritt); position: absolute; left: -1.4rem; top: 0; font-weight: 700; color: var(--koralle-text); }
+
+.keyfacts { background: var(--weiss); border-left: 3px solid var(--koralle); border-radius: 0 var(--r) var(--r) 0; padding: 1.5rem 1.6rem; margin-bottom: 1rem; box-shadow: var(--schatten); }
+.section-alt .keyfacts { background: var(--papier); box-shadow: none; }
+.keyfacts h2 { font-size: .76rem; letter-spacing: .14em; text-transform: uppercase; color: var(--koralle-text); margin: 0 0 1rem; }
+.keyfacts ul { margin-bottom: 0; }
+
+.table-wrap { overflow-x: auto; margin: 1rem 0 1.75rem; }
+.fact-table { width: 100%; min-width: 520px; border-collapse: collapse; font-size: .95rem; }
+.fact-table th, .fact-table td { text-align: left; padding: .8rem 1rem .8rem 0; border-bottom: 1px solid var(--linie); vertical-align: top; }
+.fact-table thead th { font-size: .72rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--grau); border-bottom: 2px solid var(--tinte); }
+.fact-table tbody th { font-weight: 600; color: var(--tinte); }
+.fact-table td { color: var(--grau); }
+
+.article-meta { display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; margin-top: 1.5rem; font-size: .88rem; color: var(--grau-2); }
+.sources { margin-top: 3.5rem; padding-top: 1.5rem; border-top: 1px solid var(--linie); }
+.sources h2 { font-size: 1rem; margin: 0 0 .75rem; }
+.sources li, .sources p { font-size: .88rem; }
+@media (max-width: 600px) {
+  .fact-table { min-width: 0; font-size: .86rem; }
+  .fact-table th, .fact-table td { padding: .65rem .55rem .65rem 0; hyphens: auto; overflow-wrap: break-word; }
+  .fact-table thead th { font-size: .62rem; letter-spacing: .05em; }
+}

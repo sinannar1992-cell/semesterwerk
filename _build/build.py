@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Baut die statischen semesterwerk-Seiten aus Fragmenten (pages/*.html)."""
-import os, re, sys, json
+import os, re, sys, json, datetime
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = sys.argv[1]
@@ -115,7 +115,8 @@ def footer():
             <li><a href="fuer-unternehmen.html#ablauf">So funktioniert’s</a></li>
             <li><a href="fuer-unternehmen.html#kosten">Kosten &amp; Konditionen</a></li>
             <li><a href="talent-pool.html">Beispielprofile</a></li>
-            <li><a href="fuer-unternehmen.html#ratgeber">Praktikum oder Werkstudent?</a></li>
+            <li><a href="werkstudent-einstellen.html">Ratgeber: Werkstudent einstellen</a></li>
+            <li><a href="praktikant-einstellen.html">Ratgeber: Praktikant einstellen</a></li>
             <li><a href="fuer-unternehmen.html#anfrage">Profile anfragen</a></li>
           </ul>
         </div>
@@ -169,28 +170,95 @@ STICKY = {
 ''',
 }
 
+ORG_ID = BASE + '#organisation'
+
 ORG_JSONLD = {
     "@context": "https://schema.org",
     "@type": "EmploymentAgency",
+    "@id": ORG_ID,
     "name": "semesterwerk",
     "url": BASE,
     "logo": BASE + "assets/img/png/semesterwerk-icon-512.png",
     "image": BASE + "assets/img/png/semesterwerk-icon-1024.png",
+    "description": "Personalvermittlung aus Berlin für Werkstudenten und Praktikanten. Unternehmen erhalten "
+                   "vorausgewählte Profile von Studierenden und zahlen nur bei erfolgreicher Einstellung eine "
+                   "einmalige Vermittlungsprovision. Für Studierende ist die Vermittlung kostenlos.",
+    "slogan": "Studierende, die passen. Kosten erst, wenn’s passt.",
     "telephone": "+49 30 42099429",
     "email": "info@semesterwerk.de",
     "founder": {"@type": "Person", "name": "Sinan Nar"},
     "address": {"@type": "PostalAddress", "streetAddress": "Eisenhutweg 64A",
                 "addressLocality": "Berlin", "postalCode": "12487", "addressCountry": "DE"},
     "openingHours": "Mo-Fr 09:00-18:00",
-    "areaServed": ["DE", "AT", "CH"],
-    "description": "Erfolgsbasierte Personalvermittlung von Studierenden für Praktika und Werkstudentenstellen.",
+    "areaServed": {"@type": "Country", "name": "Deutschland"},
+    "knowsAbout": ["Personalvermittlung", "Werkstudenten", "Pflichtpraktikum", "Freiwilliges Praktikum",
+                   "Recruiting von Studierenden"],
+    "contactPoint": {"@type": "ContactPoint", "telephone": "+49 30 42099429", "email": "info@semesterwerk.de",
+                     "contactType": "customer service", "availableLanguage": "German"},
 }
+
+WEBSITE_JSONLD = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": BASE + "#website",
+    "url": BASE,
+    "name": "semesterwerk",
+    "inLanguage": "de-DE",
+    "publisher": {"@id": ORG_ID},
+}
+
+SERVICE_JSONLD = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "name": "Personalvermittlung für Werkstudenten und Praktikanten",
+    "serviceType": "Personalvermittlung",
+    "provider": {"@type": "EmploymentAgency", "name": "semesterwerk", "url": BASE},
+    "areaServed": {"@type": "Country", "name": "Deutschland"},
+    "audience": {"@type": "BusinessAudience", "audienceType": "Unternehmen und Personalverantwortliche"},
+    "description": "Vorausgewählte, anonymisierte Profile von Studierenden für Werkstudentenstellen, "
+                   "Pflichtpraktika und freiwillige Praktika. Keine Vorabkosten, kein Abo; eine einmalige "
+                   "Vermittlungsprovision fällt nur bei erfolgreicher Einstellung an.",
+}
+
+# Kurzname je Seite für die Brotkrumen-Navigation (BreadcrumbList)
+CRUMB = {
+    'fuer-unternehmen.html': 'Für Unternehmen', 'fuer-studierende.html': 'Für Studierende',
+    'talent-pool.html': 'Beispielprofile', 'ueber-uns.html': 'Über uns', 'faq.html': 'FAQ',
+    'kontakt.html': 'Kontakt', 'impressum.html': 'Impressum', 'datenschutz.html': 'Datenschutz',
+    'agb.html': 'AGB', 'werkstudent-einstellen.html': 'Ratgeber: Werkstudent einstellen',
+    'praktikant-einstellen.html': 'Ratgeber: Praktikant einstellen',
+}
+
+# Ratgeber-Seiten: Veröffentlichungs- und Änderungsdatum für die Artikel-Daten
+GUIDES = {
+    'werkstudent-einstellen.html': {'published': '2026-11-21', 'modified': '2026-11-21'},
+    'praktikant-einstellen.html': {'published': '2026-11-21', 'modified': '2026-11-21'},
+}
+
+def breadcrumb_jsonld(fname):
+    return {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Startseite", "item": BASE},
+        {"@type": "ListItem", "position": 2, "name": CRUMB[fname], "item": BASE + fname},
+    ]}
+
+def article_jsonld(fname, headline, desc):
+    org = {"@type": "Organization", "name": "semesterwerk", "url": BASE,
+           "logo": {"@type": "ImageObject", "url": BASE + "assets/img/png/semesterwerk-icon-512.png"}}
+    return {"@context": "https://schema.org", "@type": "Article", "headline": headline,
+            "description": desc, "inLanguage": "de-DE", "mainEntityOfPage": BASE + fname,
+            "image": BASE + "assets/img/png/semesterwerk-icon-1024.png",
+            "datePublished": GUIDES[fname]['published'], "dateModified": GUIDES[fname]['modified'],
+            "author": org, "publisher": org}
 
 def page(fname, title, desc, body, sticky=None, jsonld=None, og_title=None):
     font = os.path.exists(os.path.join(OUT, 'assets/fonts/Sora-Variable.woff2'))
     canonical = BASE if fname == 'index.html' else BASE + fname
+    og_type = 'article' if fname in GUIDES else 'website'
+    blocks = list(jsonld or [])
+    if fname in CRUMB:
+        blocks.append(breadcrumb_jsonld(fname))
     ld = ''
-    for block in (jsonld or []):
+    for block in blocks:
         ld += '  <script type="application/ld+json">\n' + json.dumps(block, ensure_ascii=False, indent=2) + '\n  </script>\n'
     preload = ('  <link rel="preload" href="assets/fonts/Sora-Variable.woff2" as="font" type="font/woff2" crossorigin>\n' if font else '')
     body = re.sub(r'\{\{i:([a-z-]+)\}\}', lambda m: icon(m.group(1)), body)
@@ -205,7 +273,7 @@ def page(fname, title, desc, body, sticky=None, jsonld=None, og_title=None):
   <meta name="description" content="{desc}">
   <link rel="canonical" href="{canonical}">
 
-  <meta property="og:type" content="website">
+  <meta property="og:type" content="{og_type}">
   <meta property="og:locale" content="de_DE">
   <meta property="og:site_name" content="semesterwerk">
   <meta property="og:url" content="{canonical}">
@@ -217,7 +285,7 @@ def page(fname, title, desc, body, sticky=None, jsonld=None, og_title=None):
   <link rel="icon" href="favicon.ico" sizes="any">
   <link rel="icon" type="image/png" sizes="192x192" href="assets/img/png/semesterwerk-icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/img/png/semesterwerk-icon-180.png">
-{preload}  <link rel="stylesheet" href="assets/css/style.css?v=20261122">
+{preload}  <link rel="stylesheet" href="assets/css/style.css?v=20261123">
   <script src="assets/js/main.js?v=20261122-5" defer></script>
 {ld}</head>
 <body>
@@ -263,37 +331,65 @@ def faq_jsonld(html):
                             "acceptedAnswer": {"@type": "Answer", "text": strip(a)}} for q, a in qs]}
 
 PAGES = [
-    ('index.html', 'semesterwerk – Praktikant:innen & Werkstudierende finden | Zahlung nur bei Einstellung',
-     'Vorausgewählte Studierende für Praktika und Werkstudentenstellen. Keine Vorabkosten, kein Abo – eine einmalige Vermittlungsprovision nur bei erfolgreicher Einstellung.',
-     'index.html', 'company', [ORG_JSONLD]),
-    ('fuer-unternehmen.html', 'Für Unternehmen: Praktikant:innen & Werkstudierende ohne Vorabkosten | semesterwerk',
-     'So funktioniert die erfolgsbasierte Vermittlung von Praktikant:innen und Werkstudierenden: Profile kostenlos sichten, Provision nur bei Einstellung.',
-     'fuer-unternehmen.html', 'company', None),
-    ('fuer-studierende.html', 'Für Studierende: Praktikum & Werkstudentenjob – kostenlos vermittelt | semesterwerk',
-     'Einmal registrieren, passende Praktika und Werkstudentenjobs vorgeschlagen bekommen. Kostenlos, anonym und nur mit deiner Zustimmung.',
-     'fuer-studierende.html', 'student', None),
-    ('talent-pool.html', 'Beispielprofile: So stellen wir Kandidat:innen vor | semesterwerk',
-     'Beispiele für anonymisierte Profilvorschläge von Praktikant:innen und Werkstudierenden – übersichtlich, geprüft und auf das Wesentliche reduziert.',
+    ('index.html', 'Werkstudenten & Praktikanten finden | semesterwerk Berlin',
+     'Personalvermittlung für Werkstudenten und Praktikanten: vorausgewählte Studierende, keine Vorabkosten, kein Abo – Sie zahlen nur bei Einstellung.',
+     'index.html', 'company', [ORG_JSONLD, WEBSITE_JSONLD, 'faq']),
+    ('fuer-unternehmen.html', 'Personalvermittlung Studenten: Ablauf & Kosten | semesterwerk',
+     'So läuft die Vermittlung von Werkstudenten und Praktikanten: passende Profile in der Regel in 48–72 Stunden, Provision nur bei Einstellung, kein Abo.',
+     'fuer-unternehmen.html', 'company', [SERVICE_JSONLD]),
+    ('fuer-studierende.html', 'Werkstudentenjob & Praktikum finden | semesterwerk',
+     'Werkstudentenjob, Pflichtpraktikum oder freiwilliges Praktikum gesucht? Einmal eintragen und passende Stellen vorgeschlagen bekommen – kostenlos.',
+     'fuer-studierende.html', 'student', ['faq']),
+    ('talent-pool.html', 'Beispielprofile: Werkstudenten & Praktikanten | semesterwerk',
+     'So stellen wir Ihnen Kandidaten vor: anonymisierte Beispielprofile von Werkstudenten und Praktikanten aus Informatik, BWL, Marketing und mehr.',
      'talent-pool.html', 'company', None),
-    ('ueber-uns.html', 'Über uns – persönliche Personalvermittlung aus Berlin | semesterwerk',
-     'semesterwerk vermittelt Studierende an Unternehmen – persönlich, transparent und erfolgsbasiert. Lernen Sie Gründer Sinan Nar kennen.',
+    ('ueber-uns.html', 'Über uns: Personalvermittlung aus Berlin | semesterwerk',
+     'semesterwerk vermittelt Werkstudenten und Praktikanten an Unternehmen – persönlich, transparent und erfolgsbasiert. Lernen Sie uns kennen.',
      'ueber-uns.html', 'company', None),
-    ('faq.html', 'FAQ – Fragen zu Kosten, Ablauf & Datenschutz | semesterwerk',
-     'Antworten für Unternehmen und Studierende: Wann Kosten entstehen, wie schnell Profile kommen und wie Ihre Daten geschützt sind.',
-     'faq.html', 'company', 'faq'),
-    ('kontakt.html', 'Kontakt – persönlich erreichbar | semesterwerk',
+    ('faq.html', 'FAQ: Kosten & Ablauf der Personalvermittlung | semesterwerk',
+     'Wann entstehen Kosten, wie hoch ist die Provision, wie schnell kommen Profile? Antworten auf die häufigsten Fragen von Unternehmen und Studierenden.',
+     'faq.html', 'company', ['faq']),
+    ('kontakt.html', 'Kontakt | semesterwerk – Personalvermittlung Berlin',
      'Rufen Sie an oder schreiben Sie uns: Wir beraten Sie persönlich zur Besetzung von Praktikums- und Werkstudentenstellen.',
      'kontakt.html', 'company', None),
+    ('werkstudent-einstellen.html', 'Werkstudent einstellen: Regeln & Kosten 2026 | semesterwerk',
+     '20-Stunden-Regel, Sozialversicherung, Kosten für Arbeitgeber und Checkliste: Was Sie 2026 beim Einstellen von Werkstudenten beachten müssen.',
+     'werkstudent-einstellen.html', 'company', ['article']),
+    ('praktikant-einstellen.html', 'Praktikant einstellen: Mindestlohn & Regeln 2026 | semesterwerk',
+     'Pflichtpraktikum oder freiwillig, Mindestlohn, Sozialversicherung und Praktikumsvertrag: Was Arbeitgeber 2026 beim Einstellen von Praktikanten beachten müssen.',
+     'praktikant-einstellen.html', 'company', ['article']),
     ('impressum.html', 'Impressum | semesterwerk', 'Impressum und Anbieterkennzeichnung von semesterwerk gemäß § 5 DDG.', 'impressum.html', None, None),
     ('datenschutz.html', 'Datenschutzerklärung | semesterwerk', 'Informationen zur Verarbeitung personenbezogener Daten bei semesterwerk gemäß DSGVO.', 'datenschutz.html', None, None),
     ('agb.html', 'AGB für Unternehmen | semesterwerk', 'Allgemeine Geschäfts- und Vermittlungsbedingungen von semesterwerk für Unternehmen.', 'agb.html', None, None),
 ]
+
+def write_sitemap():
+    """Sitemap aus der Seitenliste; lastmod = letzte Änderung des Seiteninhalts."""
+    rows = []
+    for fname, *_ in PAGES:
+        mtime = os.path.getmtime(os.path.join(HERE, 'pages', fname))
+        loc = BASE if fname == 'index.html' else BASE + fname
+        rows.append(f'  <url>\n    <loc>{loc}</loc>\n    <lastmod>{datetime.date.fromtimestamp(mtime).isoformat()}</lastmod>\n  </url>')
+    xml = ('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+           + '\n'.join(rows) + '\n</urlset>\n')
+    with open(os.path.join(OUT, 'sitemap.xml'), 'w', encoding='utf-8') as f:
+        f.write(xml)
+    print('geschrieben: sitemap.xml')
 
 only = set(sys.argv[2:])
 for fname, title, desc, src, sticky, ld in PAGES:
     if only and fname not in only:
         continue
     body = frag(src)
-    if ld == 'faq':
-        ld = [faq_jsonld(body)]
-    page(fname, title, desc, body, sticky, ld)
+    resolved = []
+    for block in (ld or []):
+        if block == 'faq':
+            resolved.append(faq_jsonld(body))
+        elif block == 'article':
+            resolved.append(article_jsonld(fname, title.split(' | ')[0], desc))
+        else:
+            resolved.append(block)
+    page(fname, title, desc, body, sticky, resolved)
+
+if not only:
+    write_sitemap()
